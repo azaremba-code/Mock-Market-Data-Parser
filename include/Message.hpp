@@ -2,7 +2,7 @@
 #define MESSAGE_HPP
 
 using ID = std::uint64_t;
-using Timestamp = std::uint32_t;
+using Timestamp = std::uint64_t;
 using Price = std::uint32_t;
 using Quantity = std::uint32_t;
 
@@ -35,7 +35,7 @@ public:
 
 private:
 	ID orderID {};
-	Price price {};
+	Price limitPrice {};
 	Quantity quantity {};
 	Side side {};
 };
@@ -62,7 +62,7 @@ public:
 
 private:
 	ID orderID {};
-	Price price {};
+	Price executionPrice {};
 	Quantity quantity {};
 };
 
