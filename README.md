@@ -2,7 +2,7 @@
 A simplified binary market data generator modeling exchange-level order book events [TODO: and an optimized parser that parses this format].
 
 ## Generator
-This part of the project generates replayable binary files containing a stream of order book messages. Currently, the three supported type are:
+This part of the project generates replayable binary files containing a stream of order book messages. Currently, the three supported types are:
 
 * Add Order
 * Cancel Order
@@ -13,7 +13,7 @@ The goal is to model realistic exchange semantics while keeping the system simpl
 Each order can be manually entered by the user [TODO: or be generated probabilistically].
 
 ## File Format Specification
-Each file represents market activity for a single symbol (e.g. AAPL).
+Each file represents market activity for a single symbol (e.g., AAPL).
 
 A file consists of:
 
@@ -25,49 +25,50 @@ A file consists of:
 [Message N]
 ```
 
-All fields use fixed-width integer types for deterministic binary layout. The file will be a continuous stream of binary data in little-endian (host order).
+All fields use fixed-width integer types for deterministic binary layout. The file will be a continuous stream of binary data. 
+All multi-byte integer fields are encoded in little-endian byte order. Fixed-width byte arrays (e.g., char[8]) are written as raw byte sequences.
 
 ### File Header Specification
-The file header consists of the symbol (e.g. AAPL) and N, the number of messages.
+The file header consists of the symbol (e.g., AAPL) and N, the number of messages.
 
-```
-Symbol:		8 Bytes (char[8] e.g. "AAPL\0\0\0\0" or "NAMEHERE" [note: possibly no null-terminator])
-N:			4 Bytes (uint32  e.g. 5000 messages)
-```
+| Field  | Size | Type    | Description |
+|--------|------|---------|-------------|
+| Symbol | 8 B  | char[8] | ASCII symbol (e.g., "AAPL"). If shorter than 8 bytes, padded with `\0`. No null terminator required. |
+| N      | 4 B  | uint32  | Number of messages in the file. |
 
 ## Message Specification
-Each message will include a message header, which will include the message type (e.g. Add, Cancel, or Fulfill) and a timestamp for that message.
+Each message will include a message header, which will include the message type (e.g., Add, Cancel, or Fulfill) and a timestamp for that message.
 
-```
-Type:		1 Byte  (uint8  e.g. 0, 1, or 2 for Add, Cancel, and Fulfill respectively)
-Timestamp:	8 Bytes (uint64 e.g. 1772636759000 ms since epoch)
-```
+| Field     | Size | Type   | Description |
+|-----------|------|--------|-------------|
+| Type      | 1 B  | uint8  | 0 = Add, 1 = Cancel, 2 = Fulfill |
+| Timestamp | 8 B  | uint64 | Milliseconds since Unix epoch (UTC) |
 
-After each message header, there will be an Add, Cancel, of Fulfill order depending on the message header type.
+After each message header, there will be an Add, Cancel, or Fulfill order depending on the message type.
 
 ### Add Order Specification
-Each Add Order will consist of an order ID, price, quantity, and side (e.g. buy or sell).
+Each Add Order will consist of an order ID, price, quantity, and side (e.g., buy or sell).
 
-```
-ID:			8 Bytes (uint64 e.g. 1000. ID is unique - no two orders have the same ID)
-Price:		4 Bytes (uint32 e.g. 1234 = $12.34 limit price. Buy side will accept lower prices and sell side will accept higher prices)
-Quantity:	4 Bytes (uint32 e.g. 50 shares maximum to be bought/sold)
-Side:		1 Byte  (uint8  e.g. 0 or 1 for buy and sell respectively)
-```
+| Field    | Size | Type   | Description |
+|----------|------|--------|-------------|
+| ID       | 8 B  | uint64 | Unique order identifier. No two active orders share the same ID. |
+| Price    | 4 B  | uint32 | Limit price in cents (e.g., 1234 = $12.34). Buy orders accept lower prices; sell orders accept higher prices. |
+| Quantity | 4 B  | uint32 | Maximum number of shares to be bought or sold. |
+| Side     | 1 B  | uint8  | 0 = Buy, 1 = Sell |
 
 ### Cancel Order Specification
 Each Cancel Order will consist of an order ID to cancel (partial cancels are not supported).
 
-```
-ID:			8 Bytes (uint64 e.g. 1000. ID is guaranteed to match an existing Add Order ID)
-```
+| Field | Size | Type   | Description |
+|-------|------|--------|-------------|
+| ID    | 8 B  | uint64 | Must match an existing active Add Order ID. |
 
 ### Fulfill Order Specification
 Each Fulfill Order will consist of an order ID to fulfill, a price, and a quantity.
 
-```
-ID:			8 Bytes (uint64 e.g. 1000. ID is guaranteed to match an existing Add Order ID)
-Price:		4 Bytes (uint32 e.g. 1234 = $12.34 execution price. Must be lower than limit price for buy orders and higher than limit price for sell orders)
-Quantity:	4 Bytes (uint32 e.g. 30 shares to be bought/sold at execution price. Must be less than or equal to corresponding Add Order remaining quantity)
-```
+| Field    | Size | Type   | Description |
+|----------|------|--------|-------------|
+| ID       | 8 B  | uint64 | Must match an existing active Add Order ID. |
+| Price    | 4 B  | uint32 | Execution price in cents (e.g., 1234 = $12.34). Must not exceed limit price for Buy orders and must not be less than limit price for Sell orders. |
+| Quantity | 4 B  | uint32 | Executed quantity. Must not exceed remaining quantity of the referenced Add Order. |
 
