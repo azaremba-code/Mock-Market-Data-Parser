@@ -72,3 +72,13 @@ Each Fulfill Order will consist of an order ID to fulfill, a price, and a quanti
 | Price    | 4 B  | uint32 | Execution price in cents (e.g., 1234 = $12.34). Must not exceed limit price for Buy orders and must not be less than limit price for Sell orders. |
 | Quantity | 4 B  | uint32 | Executed quantity. Must not exceed remaining quantity of the referenced Add Order. |
 
+## Testing Binary Files
+To test byte count of a binary file:
+```
+stat -c%s test.bin
+```
+
+To view all bytes in a binary file:
+```
+hexdump -C test.bin
+```
