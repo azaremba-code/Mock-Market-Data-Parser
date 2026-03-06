@@ -3,10 +3,10 @@
 
 #include <memory>
 #include <string>
-#include <functional>
 #include <unordered_map>
 #include <iostream>
 #include <type_traits>
+#include <cassert>
 
 #include "Message.hpp"
 
@@ -47,7 +47,7 @@ namespace MessageInputHandler {
 	}
 
 	inline std::unique_ptr<Message> readFulfillOrder(Timestamp timestamp) {
-		const auto id {readInput<ID>("Please enter the ID of an order to cancel: "s)};
+		const auto id {readInput<ID>("Please enter the ID of an order to fulfill: "s)};
 		const auto price {readInput<Price>("Please enter order price: "s)};
 		const auto quantity {readInput<Quantity>("Please enter quantity: "s)};
 		return std::make_unique<FulfillOrder>(timestamp, id, price, quantity);
@@ -55,11 +55,13 @@ namespace MessageInputHandler {
 
 	inline std::unique_ptr<Message> readMessage() {
 		const auto timestamp {readInput<Timestamp>("Please enter message timestamp: "s)};
+
 		static constexpr MessageType addOrderCode {0};
 		static constexpr MessageType cancelOrderCode {1};
 		static constexpr MessageType fulfillOrderCode {2};
+
 		static_assert(std::is_same_v<decltype(readAddOrder), decltype(readCancelOrder)> && std::is_same_v<decltype(readCancelOrder), decltype(readFulfillOrder)>);
-		using CreationFunction = std::function<decltype(readAddOrder)>;
+		using CreationFunction = decltype(&readAddOrder);
 		static const std::unordered_map<MessageType, CreationFunction> creationFunctionMap {
 			{addOrderCode, readAddOrder},
 			{cancelOrderCode, readCancelOrder},
@@ -72,6 +74,7 @@ namespace MessageInputHandler {
 			", fulfill = "s + std::to_string(fulfillOrderCode) + ")"s
 		};
 		const auto messageCode {readInput<MessageType>("Please enter message type "s + messageTypeClarifier + ": "s)};
+		assert(creationFunctionMap.contains(messageCode));
 		return creationFunctionMap.at(messageCode)(timestamp);
 	}
 }
