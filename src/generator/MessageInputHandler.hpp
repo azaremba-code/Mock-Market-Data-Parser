@@ -1,5 +1,5 @@
-#ifndef MESSAFE_INPUT_HANDLER_HPP
-#define MESSAFE_INPUT_HANDLER_HPP
+#ifndef MESSAGE_INPUT_HANDLER_HPP
+#define MESSAGE_INPUT_HANDLER_HPP
 
 #include <memory>
 #include <string>
