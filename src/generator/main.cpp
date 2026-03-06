@@ -1,18 +1,13 @@
 #include <fstream>
+#include <sstream>
 
 #include "Message.hpp"
+#include "MessageInputHandler.hpp"
 
 int main() {
-	AddOrder addOrder {1, 1, 1, 1, AddOrder::Side::Sell};
-	std::ofstream add {"add.bin", std::ios::binary};
-	add << addOrder;
-
-	CancelOrder cancelOrder {1, 1};
-	std::ofstream cancel {"cancel.bin", std::ios::binary};
-	cancel << cancelOrder;
-
-	FulfillOrder fulfillOrder {1, 1, 1, 1};
-	std::ofstream fulfill {"fulfill.bin", std::ios::binary};
-	fulfill << fulfillOrder;
-
+	std::unique_ptr<Message> message {MessageInputHandler::readMessage()};
+	std::ofstream out {"test.bin", std::ios::binary};
+	out << *message;
+	
+	return 0;
 }

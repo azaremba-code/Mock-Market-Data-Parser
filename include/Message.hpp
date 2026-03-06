@@ -11,6 +11,8 @@ using Timestamp = std::uint64_t;
 using Price = std::uint32_t;
 using Quantity = std::uint32_t;
 
+using MessageType = std::uint8_t;
+
 class Message {
 public:
 	virtual void writeToStream(std::ostream& stream) const = 0;
@@ -30,13 +32,15 @@ protected:
 	Timestamp m_timestamp {};
 };
 
-std::ostream& operator<<(std::ostream& os, const Message& message) {
+inline std::ostream& operator<<(std::ostream& os, const Message& message) {
 	message.writeToStream(os);
 	return os;
 }
 
 template <std::integral IntegralType>
-void write(std::ostream& os, IntegralType num) {
+inline void write(std::ostream& os, IntegralType num) {
+	static_assert(std::endian::native == std::endian::little || std::endian::native == std::endian::big,
+		"Mixed-endian architectures are not supported.");
 	IntegralType endianCorrectedNum {(std::endian::native == std::endian::little) ? num : std::byteswap(num)};
 	os.write(reinterpret_cast<const char*>(&endianCorrectedNum), sizeof(endianCorrectedNum));	
 }
@@ -79,6 +83,14 @@ private:
 	Quantity m_quantity {};
 	Side m_side {};
 };
+
+inline std::istream& operator>>(std::istream& is, AddOrder::Side& side) {
+	std::uint32_t input {};
+	is >> input;
+	side = static_cast<AddOrder::Side>(input);
+	return is;
+}
+
 
 class CancelOrder final : public Message {
 public:
