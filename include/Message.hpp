@@ -11,11 +11,12 @@ using Timestamp = std::uint64_t;
 using Price = std::uint32_t;
 using Quantity = std::uint32_t;
 
-using MessageType = std::uint8_t;
+using MessageIdentifier = std::uint8_t;
 
 class Message {
 public:
 	virtual void writeToStream(std::ostream& stream) const = 0;
+	virtual MessageIdentifier getIdentifierCode() const = 0;
 	
 	virtual ~Message() = default;
 	
@@ -47,6 +48,8 @@ inline void write(std::ostream& os, IntegralType num) {
 
 class AddOrder final : public Message {
 public:
+	static inline constexpr MessageIdentifier identifierCode {0};
+
 	using SideType = std::uint8_t;
 
 	static inline constexpr SideType buyValue {0};
@@ -74,7 +77,11 @@ public:
 		write(os, m_quantity);
 		write(os, static_cast<SideType>(m_side));	
 	}
-		
+	
+	MessageIdentifier getIdentifierCode() const override {
+		return identifierCode;
+	}
+
 	~AddOrder() override = default;
 
 private:
@@ -94,6 +101,8 @@ inline std::istream& operator>>(std::istream& is, AddOrder::Side& side) {
 
 class CancelOrder final : public Message {
 public:
+	static inline constexpr MessageIdentifier identifierCode {1};
+
 	CancelOrder() = default;
 	
 	CancelOrder(Timestamp timestamp, ID orderID) :
@@ -105,7 +114,11 @@ public:
 		write(os, Message::m_timestamp);
                 write(os, m_orderID);
         }
-	
+
+	MessageIdentifier getIdentifierCode() const override {
+		return identifierCode;
+	}
+
 	~CancelOrder() override = default;
 
 private:
@@ -114,6 +127,8 @@ private:
 
 class FulfillOrder final : public Message {
 public:
+	static inline constexpr MessageIdentifier identifierCode {2};
+
 	FulfillOrder() = default;
 
 	FulfillOrder(Timestamp timestamp, ID orderID, Price executionPrice, Quantity quantity) :
@@ -130,6 +145,10 @@ public:
                 write(os, m_quantity);
         }
 	
+	MessageIdentifier getIdentifierCode() const override {
+		return identifierCode;
+	}
+
 	~FulfillOrder() override = default;
 
 private:
