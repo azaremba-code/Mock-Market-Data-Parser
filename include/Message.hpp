@@ -5,6 +5,10 @@
 #include <concepts>
 #include <bit>
 #include <cstdint>
+#include <span>
+#include <iterator>
+
+#include <vector>
 
 using ID = std::uint64_t;
 using Timestamp = std::uint64_t;
@@ -15,9 +19,10 @@ using MessageIdentifier = std::uint8_t;
 
 class Message {
 public:
-	virtual void writeToStream(std::ostream& stream) const = 0;
+	virtual void writeBytes(std::vector<std::byte>& out) const = 0;
+
 	virtual MessageIdentifier getIdentifierCode() const = 0;
-	
+
 	virtual ~Message() = default;
 	
 	Message(const Message&) = delete;
@@ -33,18 +38,19 @@ protected:
 	Timestamp m_timestamp {};
 };
 
-inline std::ostream& operator<<(std::ostream& os, const Message& message) {
-	message.writeToStream(os);
-	return os;
-}
-
 template <std::integral IntegralType>
-inline void write(std::ostream& os, IntegralType num) {
+void writeBytes(IntegralType num, std::vector<std::byte>& out) {
 	static_assert(std::endian::native == std::endian::little || std::endian::native == std::endian::big,
 		"Mixed-endian architectures are not supported.");
-	IntegralType endianCorrectedNum {(std::endian::native == std::endian::little) ? num : std::byteswap(num)};
-	os.write(reinterpret_cast<const char*>(&endianCorrectedNum), sizeof(endianCorrectedNum));	
+	if constexpr (std::endian::native == std::endian::big) {
+		num = std::byteswap(num);
+	}
+	const auto bytes {std::as_bytes(std::span {&num, 1uz})};
+	for (std::byte byte : bytes) {
+		out.push_back(byte);
+	}
 }
+
 
 class AddOrder final : public Message {
 public:
@@ -70,12 +76,12 @@ public:
 		m_side {side}
 	{}
 
-	void writeToStream(std::ostream& os) const override {
-		write(os, Message::m_timestamp);
-		write(os, m_orderID);
-		write(os, m_limitPrice);
-		write(os, m_quantity);
-		write(os, static_cast<SideType>(m_side));	
+	void writeBytes(std::vector<std::byte>& out) const override {
+		::writeBytes(Message::m_timestamp, out);
+		::writeBytes(m_orderID, out);
+		::writeBytes(m_limitPrice, out);
+		::writeBytes(m_quantity, out);
+		::writeBytes(static_cast<SideType>(m_side), out);
 	}
 	
 	MessageIdentifier getIdentifierCode() const override {
@@ -109,10 +115,10 @@ public:
 		Message {timestamp},
 		m_orderID {orderID}
 	{}
-	
-	void writeToStream(std::ostream& os) const override {
-		write(os, Message::m_timestamp);
-                write(os, m_orderID);
+
+	void writeBytes(std::vector<std::byte>& out) const override {
+		::writeBytes(Message::m_timestamp, out);
+		::writeBytes(m_orderID, out);
         }
 
 	MessageIdentifier getIdentifierCode() const override {
@@ -137,12 +143,12 @@ public:
 		m_executionPrice {executionPrice},
 		m_quantity {quantity}
 	{}
-
-	void writeToStream(std::ostream& os) const override {
-		write(os, Message::m_timestamp);
-                write(os, m_orderID);
-                write(os, m_executionPrice);
-                write(os, m_quantity);
+	
+	void writeBytes(std::vector<std::byte>& out) const override {
+		::writeBytes(Message::m_timestamp, out);
+		::writeBytes(m_orderID, out);
+		::writeBytes(m_executionPrice, out);
+		::writeBytes(m_quantity, out);
         }
 	
 	MessageIdentifier getIdentifierCode() const override {
