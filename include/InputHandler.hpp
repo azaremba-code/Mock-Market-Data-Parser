@@ -26,7 +26,7 @@ namespace InputHandler {
 	inline constexpr auto alwaysTrue = [] (const auto&) { return true; };
 
 	template <Inputtable T, Validator<T> F = decltype(alwaysTrue)>
-	T readInput(const std::string& prompt, const F& inputValidator = alwaysTrue) {
+	T readInput(const std::string& prompt, const F& isValid = alwaysTrue) {
 		std::cout << prompt;
 		T result {};
 		std::cin >> result;
@@ -37,14 +37,14 @@ namespace InputHandler {
 			}
 			std::cin.clear();
 			ignoreRemainingLine();
-			return readInput<T>("Failed extraction. "s + retryMessage, inputValidator);
+			return readInput<T>("Failed extraction. "s + retryMessage, isValid);
 		}
 		if (lineHasUnextractedInput()) {
 			ignoreRemainingLine();
-			return readInput<T>("Superfluous input. "s + retryMessage, inputValidator);
+			return readInput<T>("Superfluous input. "s + retryMessage, isValid);
 		}
-		if (!inputValidator(result)) {
-			return readInput<T>("Invalid input. "s + retryMessage, inputValidator);
+		if (!isValid(result)) {
+			return readInput<T>("Invalid input. "s + retryMessage, isValid);
 		}
 		return result;
 	}
@@ -56,11 +56,20 @@ namespace InputHandler {
 		std::same_as<T, signed char>;
 
 	template <typename T>
-	concept InputtableCharType = Inputtable<T> && CharType<T>; // required for proper overload resolution
+	concept InputtableCharType = Inputtable<T> && CharType<T>;
 	
 	template <InputtableCharType T, Validator<T> F = decltype(alwaysTrue)>
-	T readInput(const std::string& prompt, const F& inputValidator = alwaysTrue) {
-		return static_cast<T>(readInput<std::uint32_t>(prompt, inputValidator));
+	T readInput(const std::string& prompt, const F& isValidInput = alwaysTrue) {
+		return static_cast<T>(readInput<std::uint32_t>(prompt, isValidInput));
+	}
+
+	template <typename T>
+	concept UnsignedType = Inputtable<T> && !CharType<T> && std::unsigned_integral<T> && !std::same_as<T, bool>;
+
+	template <UnsignedType T, Validator<T> F = decltype(alwaysTrue)>
+	T readInput(const std::string& prompt, const F& isValidInput = alwaysTrue) {
+		static const auto isValidAndNonNegative = [&] (const auto& input) { return isValidInput(input) && input >= 0; };
+		return static_cast<T>(readInput<std::make_signed_t<T>>(prompt, isValidAndNonNegative));
 	}
 }
 
