@@ -7,8 +7,9 @@
 #include <cstdint>
 #include <span>
 #include <iterator>
-
 #include <vector>
+
+#include "WriteUtils.hpp"
 
 using ID = std::uint64_t;
 using Timestamp = std::uint64_t;
@@ -38,20 +39,6 @@ protected:
 	Timestamp m_timestamp {};
 };
 
-template <std::integral IntegralType>
-void writeBytes(IntegralType num, std::vector<std::byte>& out) {
-	static_assert(std::endian::native == std::endian::little || std::endian::native == std::endian::big,
-		"Mixed-endian architectures are not supported.");
-	if constexpr (std::endian::native == std::endian::big) {
-		num = std::byteswap(num);
-	}
-	const auto bytes {std::as_bytes(std::span {&num, 1uz})};
-	for (std::byte byte : bytes) {
-		out.push_back(byte);
-	}
-}
-
-
 class AddOrder final : public Message {
 public:
 	static inline constexpr MessageIdentifier identifierCode {0};
@@ -77,11 +64,11 @@ public:
 	{}
 
 	void writeBytes(std::vector<std::byte>& out) const override {
-		::writeBytes(Message::m_timestamp, out);
-		::writeBytes(m_orderID, out);
-		::writeBytes(m_limitPrice, out);
-		::writeBytes(m_quantity, out);
-		::writeBytes(static_cast<SideType>(m_side), out);
+		WriteUtils::writeBytes(Message::m_timestamp, out);
+		WriteUtils::writeBytes(m_orderID, out);
+		WriteUtils::writeBytes(m_limitPrice, out);
+		WriteUtils::writeBytes(m_quantity, out);
+		WriteUtils::writeBytes(static_cast<SideType>(m_side), out);
 	}
 	
 	MessageIdentifier getIdentifierCode() const override {
@@ -117,8 +104,8 @@ public:
 	{}
 
 	void writeBytes(std::vector<std::byte>& out) const override {
-		::writeBytes(Message::m_timestamp, out);
-		::writeBytes(m_orderID, out);
+		WriteUtils::writeBytes(Message::m_timestamp, out);
+		WriteUtils::writeBytes(m_orderID, out);
         }
 
 	MessageIdentifier getIdentifierCode() const override {
@@ -145,10 +132,10 @@ public:
 	{}
 	
 	void writeBytes(std::vector<std::byte>& out) const override {
-		::writeBytes(Message::m_timestamp, out);
-		::writeBytes(m_orderID, out);
-		::writeBytes(m_executionPrice, out);
-		::writeBytes(m_quantity, out);
+		WriteUtils::writeBytes(Message::m_timestamp, out);
+		WriteUtils::writeBytes(m_orderID, out);
+		WriteUtils::writeBytes(m_executionPrice, out);
+		WriteUtils::writeBytes(m_quantity, out);
         }
 	
 	MessageIdentifier getIdentifierCode() const override {
