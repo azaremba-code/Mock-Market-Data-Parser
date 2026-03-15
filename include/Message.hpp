@@ -1,6 +1,7 @@
 #ifndef MESSAGE_HPP
 #define MESSAGE_HPP
 
+#include <iostream>
 #include <ostream>
 #include <concepts>
 #include <bit>
@@ -8,6 +9,8 @@
 #include <span>
 #include <iterator>
 #include <vector>
+#include <cassert>
+#include <memory>
 
 #include "WriteUtils.hpp"
 
@@ -24,6 +27,10 @@ public:
 
 	virtual MessageIdentifier getIdentifierCode() const = 0;
 
+	virtual std::size_t getMessageSize() const = 0;
+
+	virtual void print(std::ostream& o = std::cout) const = 0;
+
 	virtual ~Message() = default;
 	
 	Message(const Message&) = delete;
@@ -38,6 +45,17 @@ protected:
 
 	Timestamp m_timestamp {};
 };
+
+std::ostream& operator<<(std::ostream& os, const Message& message) {
+	message.print(os);
+	return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const std::unique_ptr<Message>& messagePtr) {
+	assert(messagePtr);
+	return os << *messagePtr;
+}
+
 
 class AddOrder final : public Message {
 public:
@@ -73,6 +91,21 @@ public:
 	
 	MessageIdentifier getIdentifierCode() const override {
 		return identifierCode;
+	}
+
+	std::size_t getMessageSize() const override {
+		return sizeof(AddOrder);
+	}
+	
+	inline friend std::ostream& operator<<(std::ostream& os, const AddOrder::Side& side) {
+		return os << ((side == AddOrder::Side::Buy) ? "Buy" : "Sell");
+	}
+	
+	void print(std::ostream& o = std::cout) const override {
+		o << "Timestamp: " << Message::m_timestamp << "\n" <<
+			"Order ID: " << m_orderID << "\n" <<
+			"Quantity: " << m_quantity << "\n" <<
+			"Side: " << m_side << "\n";
 	}
 
 	~AddOrder() override = default;
@@ -112,6 +145,15 @@ public:
 		return identifierCode;
 	}
 
+	std::size_t getMessageSize() const override {
+		return sizeof(CancelOrder);
+	}
+
+	void print(std::ostream& o = std::cout) const override {
+		o << "Timestamp: " << Message::m_timestamp << "\n" <<
+			"Order ID: " << m_orderID << "\n";
+	}
+
 	~CancelOrder() override = default;
 
 private:
@@ -141,6 +183,17 @@ public:
 	MessageIdentifier getIdentifierCode() const override {
 		return identifierCode;
 	}
+
+	std::size_t getMessageSize() const override {
+		return sizeof(FulfillOrder);
+	}
+
+	void print(std::ostream& o = std::cout) const override {
+		o << "Timestamp: " << Message::m_timestamp << "\n" <<
+			"Order ID: " << m_orderID << "\n" <<
+			"Price: " << m_executionPrice << "\n"
+			"Quantity: " << m_quantity << "\n";
+}
 
 	~FulfillOrder() override = default;
 
