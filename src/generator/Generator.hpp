@@ -62,6 +62,7 @@ private:
 		std::vector<std::byte> bytes {};
 		WriteUtils::writeBytes(m_symbolName, bytes);
 		for (const auto& messagePtr : m_messages) {
+			WriteUtils::writeBytes(messagePtr->getIdentifierCode(), bytes);
 			messagePtr->writeBytes(bytes);
 		}
 		m_outputFile.write(reinterpret_cast<const char*>(bytes.data()), bytes.size());
