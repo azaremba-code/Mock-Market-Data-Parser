@@ -20,7 +20,6 @@ public:
 		m_inputFile.exceptions(std::ifstream::failbit);
 		parseSymbolName();
 		parseAllMessages();
-		std::cout << "test\n";
 	}
 
 	Parser(const Parser&) = delete;
@@ -39,8 +38,9 @@ public:
 	}
 
 	void printMessages() const {
+		std::cout << "Symbol name: " << m_symbolName << "\n";
 		for (const auto& message : m_messages) {
-			std::cout << message << "\n";
+			std::cout << "\n" << message;
 		}
 	}
 	
@@ -50,16 +50,19 @@ private:
 	std::ifstream m_inputFile {};
 
 	void parseSymbolName() {
+		m_symbolName.resize(WriteUtils::maxSymbolLength);
 		m_inputFile.read(m_symbolName.data(), WriteUtils::maxSymbolLength);
 	}
 	
 	bool parseMessage() {
-		if (!m_inputFile) {
+		constexpr auto eofChar {std::char_traits<decltype(m_inputFile)::char_type>::eof()};
+		if (m_inputFile.peek() == eofChar) {
 			return false;
 		}
-		
+
 		MessageIdentifier messageIdentifier {};
 		m_inputFile.read(reinterpret_cast<char*>(&messageIdentifier), sizeof(messageIdentifier));
+
 		m_messages.push_back(MessageReader::readMessage(messageIdentifier, m_inputFile));
 		return true;
 	}

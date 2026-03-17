@@ -102,8 +102,10 @@ public:
 	}
 	
 	void print(std::ostream& o = std::cout) const override {
-		o << "Timestamp: " << Message::m_timestamp << "\n" <<
+		o << "Add Order " << "\n" << 
+			"Timestamp: " << Message::m_timestamp << "\n" <<
 			"Order ID: " << m_orderID << "\n" <<
+			"Price: " << m_limitPrice << "\n" <<
 			"Quantity: " << m_quantity << "\n" <<
 			"Side: " << m_side << "\n";
 	}
@@ -150,7 +152,8 @@ public:
 	}
 
 	void print(std::ostream& o = std::cout) const override {
-		o << "Timestamp: " << Message::m_timestamp << "\n" <<
+		o << "Cancel Order " << "\n" << 
+			"Timestamp: " << Message::m_timestamp << "\n" <<
 			"Order ID: " << m_orderID << "\n";
 	}
 
@@ -189,7 +192,8 @@ public:
 	}
 
 	void print(std::ostream& o = std::cout) const override {
-		o << "Timestamp: " << Message::m_timestamp << "\n" <<
+		o << "Fulfill Order " << "\n" <<
+			"Timestamp: " << Message::m_timestamp << "\n" <<
 			"Order ID: " << m_orderID << "\n" <<
 			"Price: " << m_executionPrice << "\n"
 			"Quantity: " << m_quantity << "\n";

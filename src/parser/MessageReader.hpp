@@ -25,7 +25,7 @@ namespace MessageReader {
 	inline std::unique_ptr<Message> readCancelOrder(Timestamp timestamp, std::istream& inputStream) {
 		ID orderID {};
 		inputStream.read(reinterpret_cast<char*>(&orderID), sizeof(orderID));
-
+		
 		return std::make_unique<CancelOrder>(timestamp, orderID);
 	}
 
