@@ -1,7 +1,26 @@
 # Mock Market Data Parser
-A simplified binary market data generator modeling exchange-level order book events [TODO: and an optimized parser that parses this format].
+A simplified binary market data generator modeling exchange-level order book events and an optimized parser that parses this format.
+
+## Build and Run
+
+After cloning the project, navigate to the root directory and run the following commands to compile the generator and parser:
+```bash
+g++ -std=c++23 -I include/ src/generator/main.cpp -o generator.out -O3
+g++ -std=c++23 -I include/ src/parser/main.cpp -o parser.out -O3
+```
+
+To run the generator:
+```bash
+./generator.out
+```
+
+To run the parser:
+```bash
+./parser.out
+```
 
 ## Generator
+
 This part of the project generates replayable binary files containing a stream of order book messages. Currently, the three supported types are:
 
 * Add Order
@@ -10,7 +29,15 @@ This part of the project generates replayable binary files containing a stream o
 
 The goal is to model realistic exchange semantics while keeping the system simple and deterministic.
 
-Each order can be manually entered by the user [TODO: or be generated probabilistically].
+Each order can be manually entered by the user.
+
+## Parser
+
+This part of the project parses binary files formatted the way the Generator generates them.
+
+The goal is to optimize parsing of data to be as efficient as possible.
+
+The parses prints out information about all parsed messages.
 
 ## File Format Specification
 Each file represents market activity for a single symbol (e.g., AAPL).
